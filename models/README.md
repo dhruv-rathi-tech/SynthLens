@@ -7,7 +7,6 @@ This directory houses documentation and instructions for obtaining the trained w
 - **File Name:** `fdcsnet_v4_final.keras`
 - **File Size:** ~18.9 MB (18,920,935 bytes)
 - **Format:** Native Keras 3 SavedModel (`.keras`)
-- **Direct Weights URL:** [Download fdcsnet_v4_final.keras](https://raw.githubusercontent.com/ga2495/Real_image_VS_Fake_Image/main/models/fdcsnet_v4_final.keras)
 
 ## Benchmark Performance (Held-Out Test Set)
 
