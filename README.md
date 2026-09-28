@@ -1,6 +1,14 @@
 # SynthLens: AI Image Detection
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-synthlens.vercel.app-3b82f6?style=for-the-badge&logo=vercel)](https://synthlens.vercel.app)
+[![API Backend](https://img.shields.io/badge/API%20Backend-synthlens.onrender.com-46E3B7?style=for-the-badge&logo=render)](https://synthlens.onrender.com)
+[![Model](https://img.shields.io/badge/Model-FDCS--Net%20V4-8b5cf6?style=for-the-badge)](reports/synthlens-report.pdf)
+[![Accuracy](https://img.shields.io/badge/Test%20Accuracy-93.78%25-10b981?style=for-the-badge)](#results)
+
 A production-grade, hybrid deep learning architecture that distinguishes real photographs from AI-generated images by fusing spatial, frequency-domain, and color-stability forensic cues through attention-based fusion.
+
+> **Live Web Application:** [https://synthlens.vercel.app](https://synthlens.vercel.app) (Dark Theme Web UI)  
+> **Backend Inference API:** [https://synthlens.onrender.com](https://synthlens.onrender.com) (FastAPI Service)
 
 ## Overview
 
