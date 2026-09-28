@@ -19,7 +19,7 @@
     activeFileName: '',
     activeFileSize: 0,
     threshold: 0.80,          // Validation-selected optimal threshold (Source of truth)
-    apiBaseUrl: localStorage.getItem('synthlens_api_url') || '',
+    apiBaseUrl: localStorage.getItem('synthlens_api_url') || 'https://synthlens.onrender.com',
     isBackendConnected: false,
     isAnalyzing: false,
   };
