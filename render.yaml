@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: synthlens-ai-detector
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: FDCSNET_MODEL_URL
+        value: "https://raw.githubusercontent.com/ga2495/Real_image_VS_Fake_Image/main/models/fdcsnet_v4_final.keras"

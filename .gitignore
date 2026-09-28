@@ -13,11 +13,14 @@ cache_val/
 *.docx
 
 # Models & Weights
-models/
+models/*
+!models/README.md
 *.h5
 *.hdf5
 *.keras
 *.weights.h5
+stage*_weights.*
+checkpoint*
 
 # Environments
 .env

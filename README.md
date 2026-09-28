@@ -59,18 +59,35 @@ With generative models like Midjourney, DALL·E, and Stable Diffusion producing 
 
 ```text
 ai-image-detection/
+├── frontend/                  # Web interface (Vercel & Render static ready)
+│   ├── index.html
+│   ├── styles.css
+│   ├── app.js
+│   ├── assets/
+│   └── vercel.json
+├── backend/                   # FastAPI inference engine (Render ready)
+│   ├── main.py
+│   └── requirements.txt
 ├── configs/
 │   └── config.py              # Hyperparameters, paths, classification threshold
+├── models/
+│   ├── README.md
+│   └── fdcsnet_v4_final.keras # Trained model weights
 ├── notebooks/
 │   └── fdcsnet-v4-training.ipynb   # Original end-to-end training notebook (Colab)
 ├── reports/                   
-│   └── fdcsnet-v4-report.pdf      # Complete report
+│   └── synthlens-report.pdf   # Complete research report
+├── samples/                   # Demo benchmark test images
+│   ├── sample_real.jpg
+│   └── sample_ai.jpg
 ├── src/
 │   ├── data_preprocessing.py  # Dataset loading, augmentation, tf.data pipelines
 │   ├── model.py                # FDCS-Net V4 architecture
 │   ├── train.py                 # 3-stage training script
 │   ├── predict.py               # CLI inference
 │   └── utils.py                  # Compilation, callbacks, evaluation, plotting
+├── render.yaml                # Render 1-click blueprint
+├── vercel.json                # Vercel 1-click configuration
 ├── .gitignore
 ├── requirements.txt
 └── README.md
@@ -125,6 +142,23 @@ python src/predict.py --model models/fdcsnet_v4_final.keras --dir path/to/images
 ```
 
 The classification threshold defaults to the value in `configs/config.py` (`CLASSIFICATION_THRESHOLD`); override per run with `--threshold`.
+
+### 4. Web Application (Frontend & API)
+
+Run the web interface locally:
+
+```bash
+# Static frontend (port 3000)
+python -m http.server 3000 --directory frontend
+
+# Or run fullstack with the FastAPI backend (port 8000)
+pip install fastapi uvicorn python-multipart
+python -m uvicorn backend.main:app --reload --port 8000
+```
+
+#### Deployment:
+- **Vercel (1-Click):** Connect the repository to [Vercel](https://vercel.com/new). The included `vercel.json` deploys the frontend automatically.
+- **Render (1-Click):** In [Render Dashboard](https://dashboard.render.com/), choose **New +** → **Blueprint** to deploy the FastAPI service using `render.yaml`.
 
 ## Results
 

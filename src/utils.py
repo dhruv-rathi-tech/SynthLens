@@ -104,8 +104,34 @@ def get_callbacks(monitor: str = "val_loss") -> list:
 
 
 # ---------------------------------------------------------------------------
-# Model persistence
+# Model persistence & Resolution
 # ---------------------------------------------------------------------------
+
+def get_custom_objects() -> dict:
+    """Return dictionary of custom layers and functions for FDCS-Net V4 deserialization."""
+    from model import (
+        preprocess_fn,
+        l2_norm_fn,
+        l2_norm_output_shape,
+        stack_fn,
+        expand_dims_fn,
+        cast_fn,
+        weighted_sum_fn,
+        compute_color_stability_map,
+        compute_fft_magnitude_map,
+    )
+    return {
+        "preprocess_fn": preprocess_fn,
+        "l2_norm_fn": l2_norm_fn,
+        "l2_norm_output_shape": l2_norm_output_shape,
+        "stack_fn": stack_fn,
+        "expand_dims_fn": expand_dims_fn,
+        "cast_fn": cast_fn,
+        "weighted_sum_fn": weighted_sum_fn,
+        "compute_color_stability_map": compute_color_stability_map,
+        "compute_fft_magnitude_map": compute_fft_magnitude_map,
+    }
+
 
 def save_model(model: tf.keras.Model, path: str) -> None:
     """Save the full Keras model (architecture + weights) to *path*."""
@@ -114,10 +140,67 @@ def save_model(model: tf.keras.Model, path: str) -> None:
     logger.info("Model saved → %s", path)
 
 
+def download_model_weights(url: str, destination_path: str) -> str:
+    """Download model weights file from a URL to destination_path."""
+    import urllib.request
+    os.makedirs(os.path.dirname(destination_path) or ".", exist_ok=True)
+    logger.info("Downloading model weights from %s to %s...", url, destination_path)
+    urllib.request.urlretrieve(url, destination_path)
+    logger.info("Download complete: %s (size: %.2f MB)", destination_path, os.path.getsize(destination_path) / (1024 * 1024))
+    return destination_path
+
+
 def load_model(path: str) -> tf.keras.Model:
-    """Load a previously saved Keras model from *path*."""
+    """Load a previously saved FDCS-Net V4 Keras model from *path*."""
     logger.info("Loading model from %s", path)
-    return tf.keras.models.load_model(path)
+    custom_objs = get_custom_objects()
+    try:
+        return tf.keras.models.load_model(path, custom_objects=custom_objs, safe_mode=False)
+    except TypeError:
+        return tf.keras.models.load_model(path, custom_objects=custom_objs)
+
+
+def resolve_and_load_model(model_path: str | None = None, auto_download: bool = True) -> tf.keras.Model:
+    """
+    Resolve model path and load FDCS-Net V4.
+    If model_path is None, checks:
+      1. Default path 'models/fdcsnet_v4_final.keras'
+      2. Environment variable 'FDCSNET_MODEL_URL' for automatic download
+    """
+    from pathlib import Path
+    root_dir = Path(__file__).resolve().parent.parent
+
+    target_path = None
+    if model_path:
+        target_path = Path(model_path)
+        if not target_path.is_absolute():
+            target_path = root_dir / target_path
+    else:
+        target_path = root_dir / "models" / "fdcsnet_v4_final.keras"
+
+    if not target_path.exists():
+        env_url = os.environ.get("FDCSNET_MODEL_URL", "").strip()
+        if env_url and auto_download:
+            try:
+                download_model_weights(env_url, str(target_path))
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to download model weights from {env_url}: {str(e)}"
+                ) from e
+        else:
+            models_dir = root_dir / "models"
+            keras_files = list(models_dir.glob("*.keras")) if models_dir.exists() else []
+            if keras_files:
+                target_path = keras_files[0]
+                logger.info("Using alternative model file found in models/: %s", target_path)
+            else:
+                raise FileNotFoundError(
+                    f"Model weights not found at '{target_path}'.\n"
+                    f"Please place 'fdcsnet_v4_final.keras' into the 'models/' directory, "
+                    f"or set the 'FDCSNET_MODEL_URL' environment variable to download it."
+                )
+
+    return load_model(str(target_path))
 
 
 # ---------------------------------------------------------------------------
@@ -308,32 +391,77 @@ def plot_training_history(histories: list, save_path: str | None = None) -> None
     plt.show()
 
 
+def extract_intermediate_maps(image_input) -> dict:
+    """
+    Extract intermediate FFT magnitude map and Color stability map for visual explainability.
+    
+    Returns
+    -------
+    dict with 'fft_magnitude' and 'color_stability' as (128, 128, 3) float32 numpy arrays in [0, 1].
+    """
+    from data_preprocessing import preprocess_image
+    from model import compute_color_stability_map, compute_fft_magnitude_map
+
+    img_tensor = preprocess_image(image_input)
+    color_map = compute_color_stability_map(img_tensor)
+    fft_map = compute_fft_magnitude_map(img_tensor)
+
+    return {
+        "color_stability": np.clip(np.squeeze(color_map.numpy()), 0.0, 1.0),
+        "fft_magnitude": np.clip(np.squeeze(fft_map.numpy()), 0.0, 1.0),
+    }
+
+
+def extract_attention_weights(model: tf.keras.Model, img_tensor: tf.Tensor) -> dict | None:
+    """Extract softmax attention weights from the fusion layer for a single image tensor."""
+    try:
+        if "attention_weights" in [layer.name for layer in model.layers]:
+            attn_layer = model.get_layer("attention_weights")
+            attn_model = tf.keras.Model(inputs=model.input, outputs=attn_layer.output)
+            raw_weights = attn_model(img_tensor, training=False).numpy().flatten()
+            return {
+                "spatial": float(raw_weights[0]),
+                "color": float(raw_weights[1]),
+                "frequency": float(raw_weights[2]),
+            }
+    except Exception as e:
+        logger.debug("Could not extract attention weights: %s", e)
+    return None
+
+
 def predict_single_image(
-    model: tf.keras.Model, image_path: str, threshold: float = CLASSIFICATION_THRESHOLD
+    model: tf.keras.Model, image_input, threshold: float = CLASSIFICATION_THRESHOLD
 ) -> dict:
     """
-    Run inference on a single image file and return a result dictionary.
+    Run inference on an image (file path, bytes, BytesIO, or PIL Image).
 
     Parameters
     ----------
     model       : Loaded FDCS-Net V4 model.
-    image_path  : Path to the image file.
-    threshold   : Classification threshold (default 0.5).
+    image_input : File path string, Path, bytes, BytesIO, or PIL Image.
+    threshold   : Classification threshold (default: CLASSIFICATION_THRESHOLD from config).
 
     Returns
     -------
-    dict with keys: prediction, confidence, label
+    dict with keys: prediction (float), confidence (float), label (str),
+                    threshold (float), attention_weights (dict or None)
     """
-    from data_preprocessing import parse_image
+    from data_preprocessing import preprocess_image
 
-    img, _ = parse_image(image_path, 0)
-    img = tf.expand_dims(img, 0)                    # add batch dim
+    img_tensor = preprocess_image(image_input)
 
-    outputs = model(img, training=False)
-    prob = float(outputs[0].numpy() if isinstance(outputs, (list, tuple)) else outputs.numpy())
+    outputs = model(img_tensor, training=False)
+    main_out = outputs[0] if isinstance(outputs, (list, tuple)) else outputs
+    prob = float(np.squeeze(main_out.numpy()))
+    # Clamp probability to [0.0, 1.0] for safety
+    prob = max(0.0, min(1.0, prob))
+
+    attn_weights = extract_attention_weights(model, img_tensor)
 
     return {
         "prediction": prob,
-        "confidence": max(prob, 1 - prob),
+        "confidence": max(prob, 1.0 - prob),
         "label": "AI-Generated" if prob >= threshold else "Real",
+        "threshold": float(threshold),
+        "attention_weights": attn_weights,
     }

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SynthLens — AI-Generated Image Detector | FDCS-Net V4</title>
+  <meta name="description" content="Production-ready multi-branch deep learning system and web application distinguishing authentic photographs from synthetic AI images via spatial, color-stability, and frequency forensic cues.">
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20width=%22100%22%20height=%22100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>">
+</head>
+<body>
+  <!-- App Container -->
+  <div class="app-layout">
+
+    <!-- Mobile Header Bar -->
+    <header class="mobile-navbar">
+      <div class="brand-inline">
+        <span class="brand-icon">🔍</span>
+        <span class="brand-name">SynthLens</span>
+      </div>
+      <button id="sidebarToggle" class="sidebar-toggle-btn" aria-label="Toggle Navigation Sidebar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+    </header>
+
+    <!-- Streamlit-Style Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-content">
+        <!-- Brand Header -->
+        <div class="sidebar-brand">
+          <div class="brand-title-wrap">
+            <span class="sidebar-logo">🔍</span>
+            <h2 class="sidebar-title">SynthLens</h2>
+          </div>
+          <p class="sidebar-caption">AI-Generated vs Real Image Detector</p>
+        </div>
+
+        <hr class="sidebar-divider">
+
+        <!-- Backend Status Pill -->
+        <div class="status-widget">
+          <div class="status-indicator-wrap">
+            <span class="status-dot connected" id="statusDot"></span>
+            <span class="status-label" id="statusText">Checking Engine...</span>
+          </div>
+          <button id="configEndpointBtn" class="btn-text-subtle" title="Configure Backend API Endpoint">⚙️ Config</button>
+        </div>
+
+        <!-- Model Information Card -->
+        <section class="sidebar-section">
+          <h3 class="sidebar-heading">Model Information</h3>
+          <ul class="meta-list">
+            <li><span class="meta-label">Architecture</span> <span class="meta-val">FDCS-Net V4 (Hybrid)</span></li>
+            <li><span class="meta-label">Spatial Branch</span> <span class="meta-val">EfficientNet-B0 (Pretrained)</span></li>
+            <li><span class="meta-label">Color Branch</span> <span class="meta-val">Perturbation Stability CNN</span></li>
+            <li><span class="meta-label">Frequency Branch</span> <span class="meta-val">2-D FFT Log-Magnitude CNN</span></li>
+            <li><span class="meta-label">Fusion Layer</span> <span class="meta-val">Softmax Dynamic Attention</span></li>
+            <li><span class="meta-label">Decision Threshold</span> <span class="meta-val highlight">0.80 (Validation-set)</span></li>
+          </ul>
+        </section>
+
+        <hr class="sidebar-divider">
+
+        <!-- Reported Benchmark (Repository Source of Truth) -->
+        <section class="sidebar-section">
+          <div class="section-title-tag">
+            <h3 class="sidebar-heading">Reported Benchmark</h3>
+            <span class="badge-mini">Test Set</span>
+          </div>
+          <p class="benchmark-note">Evaluated strictly on held-out test split with zero threshold leakage:</p>
+
+          <div class="benchmark-grid">
+            <div class="benchmark-metric">
+              <span class="b-val">93.78%</span>
+              <span class="b-lbl">Test Accuracy</span>
+            </div>
+            <div class="benchmark-metric">
+              <span class="b-val">0.9748</span>
+              <span class="b-lbl">AUC-ROC</span>
+            </div>
+            <div class="benchmark-metric">
+              <span class="b-val">0.94</span>
+              <span class="b-lbl">Macro F1-Score</span>
+            </div>
+            <div class="benchmark-metric">
+              <span class="b-val">0.80</span>
+              <span class="b-lbl">Optimal Threshold</span>
+            </div>
+          </div>
+
+          <!-- Confusion Breakdown Table -->
+          <div class="mini-table-wrapper">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Real Photos</strong></td>
+                  <td>0.93</td>
+                  <td>0.96</td>
+                  <td>0.94</td>
+                </tr>
+                <tr>
+                  <td><strong>AI Generated</strong></td>
+                  <td>0.95</td>
+                  <td>0.91</td>
+                  <td>0.93</td>
+                </tr>
+                <tr class="table-total">
+                  <td><strong>Overall</strong></td>
+                  <td><strong>0.94</strong></td>
+                  <td><strong>0.94</strong></td>
+                  <td><strong>0.94</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <hr class="sidebar-divider">
+
+        <!-- Formats & Specifications -->
+        <section class="sidebar-section">
+          <h3 class="sidebar-heading">Supported Formats</h3>
+          <div class="format-tags">
+            <span class="format-tag">JPG</span>
+            <span class="format-tag">JPEG</span>
+            <span class="format-tag">PNG</span>
+            <span class="format-tag">WEBP</span>
+            <span class="format-tag">BMP</span>
+          </div>
+          <p class="format-limit">Max file size: <strong>15 MB</strong></p>
+        </section>
+
+        <hr class="sidebar-divider">
+
+        <!-- Project Authorship Footer -->
+        <footer class="sidebar-footer">
+          <div class="author-credits">
+            <span>Original Research & Model:</span>
+            <strong>Dhruv Rathi</strong>
+            <a href="https://github.com/dhruv-rathi-tech/ai-image-detection" target="_blank" rel="noopener noreferrer" class="author-github-link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <span>@dhruv-rathi-tech</span>
+            </a>
+          </div>
+        </footer>
+
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <div class="content-container">
+
+        <!-- Top Hero Title -->
+        <header class="app-header">
+          <h1 class="main-header">SynthLens — AI-Generated Image Detector</h1>
+          <p class="sub-header">FDCS-Net V4 multi-branch deep learning classification and live forensic feature inspection</p>
+        </header>
+
+        <!-- Input Section: Tab Interface -->
+        <div class="tab-interface">
+          <div class="tab-buttons" role="tablist">
+            <button class="tab-btn active" id="tabUploadBtn" role="tab" aria-selected="true" aria-controls="uploadPanel">
+              <span class="tab-icon">📁</span> Upload Image
+            </button>
+            <button class="tab-btn" id="tabSampleBtn" role="tab" aria-selected="false" aria-controls="samplePanel">
+              <span class="tab-icon">🖼️</span> Sample Images
+            </button>
+          </div>
+
+          <!-- Tab 1: Upload Image -->
+          <div class="tab-panel active" id="uploadPanel" role="tabpanel">
+            <div class="dropzone" id="dropzone">
+              <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.bmp" class="file-input-hidden">
+              <div class="dropzone-inner">
+                <div class="dropzone-icon-circle">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                </div>
+                <h4 class="dropzone-title">Drag & drop your image here, or <span class="highlight-browse">browse</span></h4>
+                <p class="dropzone-hint">Supports JPG, JPEG, PNG, WEBP, BMP up to 15 MB</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Sample Images -->
+          <div class="tab-panel" id="samplePanel" role="tabpanel">
+            <div class="samples-selector-wrap">
+              <label for="sampleSelect" class="form-label">Select a demonstration benchmark image:</label>
+              <div class="sample-cards-grid">
+                <div class="sample-card" data-sample="sample_real.jpg" id="sampleRealCard">
+                  <div class="sample-card-img-wrap">
+                    <img src="assets/sample_real.jpg" alt="Sample Real Photograph" loading="lazy">
+                    <span class="sample-badge real">Authentic Photo</span>
+                  </div>
+                  <div class="sample-card-meta">
+                    <strong>sample_real.jpg</strong>
+                    <span>Held-out Test Split Photo</span>
+                  </div>
+                </div>
+
+                <div class="sample-card" data-sample="sample_ai.jpg" id="sampleAiCard">
+                  <div class="sample-card-img-wrap">
+                    <img src="assets/sample_ai.jpg" alt="Sample AI Generated Image" loading="lazy">
+                    <span class="sample-badge ai">AI Generated</span>
+                  </div>
+                  <div class="sample-card-meta">
+                    <strong>sample_ai.jpg</strong>
+                    <span>Synthetic Generator Test Image</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Staging & Controls Panel (Shown when an image is active) -->
+        <section class="workspace-section" id="workspaceSection" style="display: none;">
+          <hr class="content-divider">
+
+          <div class="inspection-columns">
+            
+            <!-- Left: Preview Column -->
+            <div class="col-preview">
+              <div class="panel-card preview-card">
+                <div class="card-header">
+                  <h3 class="panel-title">Input Image Preview</h3>
+                  <span class="image-meta-pill" id="imageDimBadge">0 x 0 px</span>
+                </div>
+                <div class="image-preview-frame">
+                  <img id="activePreviewImg" src="" alt="Active Image for Verification">
+                </div>
+                <div class="preview-caption">
+                  <span id="activeFileName">file.jpg</span>
+                  <span id="activeFileSize">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Analysis Controls Column -->
+            <div class="col-controls">
+              <div class="panel-card controls-card">
+                <div class="card-header">
+                  <h3 class="panel-title">Forensic Analysis Controls</h3>
+                  <span class="badge-subtle">FDCS-Net V4</span>
+                </div>
+                <p class="controls-desc">
+                  Run the 3-domain deep neural network combining Spatial Semantics, Frequency Spectrum (FFT), and Color Stability maps.
+                </p>
+
+                <!-- Threshold Slider -->
+                <div class="control-group">
+                  <div class="slider-header">
+                    <label for="thresholdSlider" class="control-label">
+                      Classification Decision Threshold:
+                      <span class="info-tooltip" title="Default is 0.80 (selected on the validation set during research to prevent test leakage). Predictions with P(AI) ≥ Threshold are classified as AI-Generated.">ℹ️</span>
+                    </label>
+                    <span class="slider-value-display" id="thresholdValue">0.80</span>
+                  </div>
+                  <div class="slider-track-wrap">
+                    <input type="range" id="thresholdSlider" min="0.10" max="0.95" step="0.01" value="0.80">
+                    <div class="slider-ticks">
+                      <span>0.10 (Strict)</span>
+                      <span class="tick-optimal">0.80 (Validation Optimal)</span>
+                      <span>0.95 (Lenient)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="action-btn-wrap">
+                  <button id="analyzeBtn" class="btn-primary-action">
+                    <span class="btn-icon">🚀</span>
+                    <span class="btn-text">Analyze Image</span>
+                    <div class="spinner-loader" id="btnSpinner"></div>
+                  </button>
+                </div>
+
+                <div class="engine-notice" id="engineNotice">
+                  <span class="notice-icon">⚡</span>
+                  <span class="notice-msg">Engine: Ready for real-time multi-branch inference</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Prediction Results Section (Hidden until analyzed) -->
+        <section class="results-section" id="resultsSection" style="display: none;">
+          <hr class="content-divider">
+
+          <div class="results-header">
+            <h2 class="section-title">Prediction Results</h2>
+            <span class="timestamp-tag" id="analysisTimestamp">Just now</span>
+          </div>
+
+          <!-- Dynamic Result Card Banner -->
+          <div class="pred-card" id="predCard">
+            <div class="pred-card-badge-wrap">
+              <span class="badge-verdict" id="verdictBadge">VERDICT</span>
+            </div>
+            <div class="pred-probability-line" id="predProbLine">
+              Predicted Probability: 0.00% (Threshold: 0.80)
+            </div>
+            <p class="pred-explanation" id="predExplanation">
+              Explanation message...
+            </p>
+          </div>
+
+          <!-- Metric Cards Grid -->
+          <div class="metrics-grid">
+            <div class="stat-box">
+              <span class="stat-label">Classification</span>
+              <div class="stat-value" id="statClass">—</div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">AI Probability P(AI)</span>
+              <div class="stat-value" id="statProb">—</div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Confidence</span>
+              <div class="stat-value" id="statConfidence">—</div>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Active Threshold</span>
+              <div class="stat-value" id="statThreshold">0.80</div>
+            </div>
+          </div>
+
+          <!-- AI Probability Spectrum Progress Bar -->
+          <div class="spectrum-container">
+            <div class="spectrum-header">
+              <span class="spectrum-title">AI Probability Spectrum</span>
+              <span class="spectrum-coords" id="spectrumCoords">P(AI): 0.0% | Threshold: 80%</span>
+            </div>
+            <div class="spectrum-track">
+              <div class="spectrum-fill" id="spectrumFill"></div>
+              <div class="spectrum-threshold-marker" id="spectrumMarker" title="Decision Threshold">
+                <span class="marker-needle"></span>
+                <span class="marker-tag">0.80</span>
+              </div>
+            </div>
+            <div class="spectrum-scale">
+              <span>0% (Authentic Real)</span>
+              <span>50%</span>
+              <span class="marker-opt-text">80% Threshold</span>
+              <span>100% (Synthetic AI)</span>
+            </div>
+          </div>
+
+          <!-- Forensic Feature Inspection (Intermediate Maps) -->
+          <div class="forensics-container">
+            <div class="forensics-title-wrap">
+              <h3 class="forensics-title">🔬 Forensic Feature Inspection</h3>
+              <p class="forensics-subtitle">
+                FDCS-Net V4 extracts multi-domain forensic cues. Below are the actual intermediate representations computed and processed by each branch:
+              </p>
+            </div>
+
+            <div class="forensic-maps-grid">
+              <!-- Branch 1: Spatial -->
+              <div class="forensic-card">
+                <div class="forensic-card-header">
+                  <span class="forensic-badge">Branch 1</span>
+                  <h4>Spatial Input (256x256)</h4>
+                </div>
+                <div class="forensic-canvas-frame">
+                  <canvas id="spatialCanvas" width="256" height="256"></canvas>
+                </div>
+                <p class="forensic-card-desc">
+                  Processed by ImageNet-pretrained <strong>EfficientNet-B0</strong> convolutional backbone to extract multi-scale semantic features and spatial boundary artifacts.
+                </p>
+              </div>
+
+              <!-- Branch 2: Color Stability -->
+              <div class="forensic-card">
+                <div class="forensic-card-header">
+                  <span class="forensic-badge">Branch 2</span>
+                  <h4>Color Stability Map (128x128)</h4>
+                </div>
+                <div class="forensic-canvas-frame">
+                  <canvas id="colorCanvas" width="128" height="128"></canvas>
+                </div>
+                <p class="forensic-card-desc">
+                  Perturbation-difference map highlighting pixel-grid quantization instability and color-space boundary resistance via a dedicated CNN branch.
+                </p>
+              </div>
+
+              <!-- Branch 3: Frequency FFT -->
+              <div class="forensic-card">
+                <div class="forensic-card-header">
+                  <span class="forensic-badge">Branch 3</span>
+                  <h4>2D-FFT Magnitude Spectrum (128x128)</h4>
+                </div>
+                <div class="forensic-canvas-frame">
+                  <canvas id="fftCanvas" width="128" height="128"></canvas>
+                </div>
+                <p class="forensic-card-desc">
+                  Log-scaled 2-D Fast Fourier Transform magnitude spectrum capturing high-frequency periodic grid anomalies intrinsic to GAN and diffusion upsampling.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attention Weights Breakdown -->
+          <div class="attention-weights-card" id="attentionSection">
+            <div class="card-header">
+              <h4 class="attention-title">Dynamic Softmax Attention Fusion Weights</h4>
+              <span class="badge-subtle">Branch Contribution</span>
+            </div>
+            <p class="attention-desc">
+              Rather than naive concatenation, FDCS-Net V4's attention head dynamically computes softmax weights per image, allocating reliance where forensic signals are strongest:
+            </p>
+            <div class="attention-bars-grid">
+              
+              <div class="attn-bar-item">
+                <div class="attn-bar-labels">
+                  <span class="attn-name">Spatial Branch (EfficientNet-B0)</span>
+                  <span class="attn-val" id="attnSpatialVal">0.0%</span>
+                </div>
+                <div class="attn-bar-track">
+                  <div class="attn-bar-fill spatial" id="attnSpatialFill"></div>
+                </div>
+              </div>
+
+              <div class="attn-bar-item">
+                <div class="attn-bar-labels">
+                  <span class="attn-name">Color Stability Branch</span>
+                  <span class="attn-val" id="attnColorVal">0.0%</span>
+                </div>
+                <div class="attn-bar-track">
+                  <div class="attn-bar-fill color" id="attnColorFill"></div>
+                </div>
+              </div>
+
+              <div class="attn-bar-item">
+                <div class="attn-bar-labels">
+                  <span class="attn-name">Frequency FFT Branch</span>
+                  <span class="attn-val" id="attnFreqVal">0.0%</span>
+                </div>
+                <div class="attn-bar-track">
+                  <div class="attn-bar-fill freq" id="attnFreqFill"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Technical Methodology Accordion -->
+        <section class="methodology-section">
+          <hr class="content-divider">
+
+          <details class="accordion-item" id="techAccordion">
+            <summary class="accordion-header">
+              <span class="accordion-title">ℹ️ Technical Details & Forensic Methodology</span>
+              <span class="accordion-chevron">▾</span>
+            </summary>
+            <div class="accordion-content">
+              <h4>Architecture Overview: FDCS-Net V4</h4>
+              <p>
+                FDCS-Net V4 is a hybrid deep neural network engineered to identify synthetic imagery across disparate generative model architectures (Midjourney, DALL·E, Stable Diffusion, GANs):
+              </p>
+              <ol class="tech-steps-list">
+                <li>
+                  <strong>Spatial Branch:</strong> Leverages an ImageNet-pretrained <code>EfficientNet-B0</code> backbone to capture high-level semantic inconsistencies and unnatural physical textures.
+                </li>
+                <li>
+                  <strong>Color Stability Branch:</strong> Evaluates high-frequency perturbation resistance via depthwise convolutions on quantized color channels, exposing synthetic color distribution artifacts.
+                </li>
+                <li>
+                  <strong>Frequency Branch:</strong> Computes a log-scaled 2-D Fast Fourier Transform (FFT) magnitude spectrum to capture periodic grid fingerprints generated during transpose-convolution upsampling.
+                </li>
+                <li>
+                  <strong>Attention Fusion Layer:</strong> Branch feature embeddings are L2-normalized and passed to a learned softmax attention head to produce dynamically weighted representations.
+                </li>
+                <li>
+                  <strong>Leak-Free Decision Boundary:</strong> The classification threshold (<code>0.80</code>) was chosen strictly on the validation set using Youden's J statistic ($J = \text{TPR} - \text{FPR}$), ensuring completely unbiased held-out test set evaluation.
+                </li>
+              </ol>
+
+              <div class="ascii-architecture-wrap">
+                <pre class="ascii-architecture">
+Input Image (256x256x3)
+       │
+   ┌───┴───────────────┬───────────────────┐
+   ▼                   ▼                   ▼
+Spatial Branch   Color Branch      Frequency Branch
+EfficientNet-B0  Color Stability   2D-FFT Magnitude
+(Pretrained)     Map → CNN         Spectrum → CNN
+   │                   │                   │
+   └───► L2-Normalize each branch ◄────────┘
+                       │
+             Attention Fusion Head
+               (Softmax Weights)
+                       │
+              Classifier Head
+             (Dense 128 → Sigmoid)
+                       │
+              Real / AI-Generated
+                </pre>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Forensic & Legal Disclaimer -->
+        <div class="disclaimer-box">
+          <div class="disclaimer-icon">⚠️</div>
+          <div class="disclaimer-text">
+            <strong>Forensic & Legal Disclaimer:</strong><br>
+            SynthLens produces probabilistic classifications based on learned statistical, frequency, and color-stability artifacts. 
+            It is designed for research, screening, and educational purposes and must <strong>not</strong> be considered definitive legal or judicial evidence.
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- API Endpoint Configuration Modal -->
+  <div class="modal-overlay" id="configModal" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Backend API Configuration</h3>
+        <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          SynthLens can run with a live FastAPI backend deployed on <strong>Render</strong>, or in standalone browser demonstration mode on <strong>Vercel</strong>.
+        </p>
+        <div class="form-group">
+          <label for="apiUrlInput">Backend API Base URL:</label>
+          <input type="url" id="apiUrlInput" class="form-input" placeholder="http://127.0.0.1:8000 or https://your-app.onrender.com">
+          <span class="form-hint">Leave blank or empty to use automatic local/same-origin endpoint.</span>
+        </div>
+        <div class="modal-status-box" id="modalStatusBox">
+          Status: Ready to test connection
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-subtle" id="testApiBtn">Test Connection</button>
+        <button class="btn-primary-action" id="saveApiBtn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
