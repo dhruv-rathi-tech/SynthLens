@@ -66,7 +66,7 @@ With generative models like Midjourney, DALL·E, and Stable Diffusion producing 
 ## Project Structure
 
 ```text
-ai-image-detection/
+SynthLens/
 ├── frontend/                  # Web interface (Vercel & Render static ready)
 │   ├── index.html
 │   ├── styles.css
@@ -104,8 +104,8 @@ ai-image-detection/
 ## Installation
 
 ```bash
-git clone https://github.com/dhruv-rathi-tech/ai-image-detection.git
-cd ai-image-detection
+git clone https://github.com/dhruv-rathi-tech/SynthLens.git
+cd SynthLens
 
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
